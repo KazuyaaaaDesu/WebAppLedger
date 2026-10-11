@@ -38,6 +38,7 @@ interface LinkButtonProps extends ButtonOwnProps {
   to: string;
   className?: string;
   'aria-label'?: string;
+  title?: string;
 }
 
 export function LinkButton({ to, variant, size, block, className, children, ...rest }: LinkButtonProps) {

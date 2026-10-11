@@ -1,11 +1,6 @@
 // ============================================
-// DEMO AUTHENTICATION — local only.
-//
-// This is an explicit demo gate for a frontend-only build: accounts and
-// sessions live in this browser's localStorage, passwords are stored as a
-// salted SHA-256 digest (never plaintext), and there is NO server, NO
-// session token and NO authorization. It must never be presented as
-// production security — see README "Local demo mode vs production".
+// Local demo authentication. Accounts and sessions are stored in this browser;
+// this is not production authentication and does not require a backend.
 // ============================================
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -15,6 +10,7 @@ import { STORAGE_KEYS } from '../constants';
 export interface AuthUser {
   name: string;
   email: string;
+  isVerified: boolean;
 }
 
 interface StoredAuth {
@@ -28,24 +24,48 @@ interface AuthContextValue {
   ready: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  verifyEmail: (token: string) => Promise<{ ok: boolean; error?: string }>;
+  resendVerification: (email: string) => Promise<{ ok: boolean; error?: string }>;
+  forgotPassword: (email: string) => Promise<{ ok: boolean; error?: string }>;
+  resetPassword: (token: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const EMPTY_AUTH: StoredAuth = { account: null, session: null };
+const LOCAL_EMAIL_ERROR = 'Email verification and password reset are unavailable in local demo mode.';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function readStored(): StoredAuth {
-  const empty: StoredAuth = { account: null, session: null };
+  if (typeof window === 'undefined') return EMPTY_AUTH;
+
   try {
-    const raw = typeof window === 'undefined' ? null : window.localStorage.getItem(STORAGE_KEYS.auth);
-    if (!raw) return empty;
-    const parsed = JSON.parse(raw) as StoredAuth;
-    if (!parsed || typeof parsed !== 'object') return empty;
-    return {
-      account: parsed.account && typeof parsed.account.hash === 'string' ? parsed.account : null,
-      session: parsed.session && typeof parsed.session.email === 'string' ? parsed.session : null,
-    };
-  } catch {
-    return empty;
+    const raw = window.localStorage.getItem(STORAGE_KEYS.auth);
+    if (!raw) return EMPTY_AUTH;
+
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== 'object' || parsed === null) return EMPTY_AUTH;
+
+    const value = parsed as Partial<StoredAuth>;
+    const account =
+      value.account &&
+      typeof value.account.name === 'string' &&
+      typeof value.account.email === 'string' &&
+      typeof value.account.salt === 'string' &&
+      typeof value.account.hash === 'string'
+        ? value.account
+        : null;
+    const session =
+      value.session && typeof value.session.name === 'string' && typeof value.session.email === 'string'
+        ? { name: value.session.name, email: value.session.email, isVerified: true }
+        : null;
+
+    return { account, session };
+  } catch (err) {
+    console.warn('[sakura-ledger] Could not read the local demo session.', err);
+    return EMPTY_AUTH;
   }
 }
 
@@ -53,7 +73,8 @@ function writeStored(value: StoredAuth): void {
   try {
     window.localStorage.setItem(STORAGE_KEYS.auth, JSON.stringify(value));
   } catch (err) {
-    console.warn('[sakura-ledger] Could not persist the demo session.', err);
+    console.error('[sakura-ledger] Could not save the local demo session.', err);
+    throw new Error('Could not save this demo account in your browser. Check that browser storage is available.');
   }
 }
 
@@ -65,7 +86,7 @@ async function digest(password: string, salt: string): Promise<string> {
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
   }
-  // Deterministic fallback for non-secure contexts (still not plaintext).
+
   let hash = 5381;
   const text = `${salt}::${password}`;
   for (let i = 0; i < text.length; i++) hash = ((hash << 5) + hash + text.charCodeAt(i)) | 0;
@@ -81,15 +102,12 @@ function makeSalt(): string {
     .join('');
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const stored = readStored();
-    setUser(stored.session);
+    setUser(readStored().session);
     setReady(true);
   }, []);
 
@@ -105,8 +123,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const hash = await digest(password, stored.account.salt);
     if (hash !== stored.account.hash) return { ok: false, error: 'Incorrect email or password.' };
 
-    const session: AuthUser = { name: stored.account.name, email: stored.account.email };
-    writeStored({ ...stored, session });
+    const session: AuthUser = { name: stored.account.name, email: stored.account.email, isVerified: true };
+    try {
+      writeStored({ ...stored, session });
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Could not save the local demo session.' };
+    }
     setUser(session);
     return { ok: true };
   }, []);
@@ -119,27 +141,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (password.length < 8) return { ok: false, error: 'Password must be at least 8 characters.' };
 
     const stored = readStored();
-    if (stored.account && stored.account.email === trimmed) {
+    if (stored.account?.email === trimmed) {
       return { ok: false, error: 'A demo account with that email already exists.' };
     }
+
     const salt = makeSalt();
     const hash = await digest(password, salt);
     const account = { name: trimmedName, email: trimmed, salt, hash };
-    const session: AuthUser = { name: trimmedName, email: trimmed };
-    writeStored({ account, session });
+    const session: AuthUser = { name: trimmedName, email: trimmed, isVerified: true };
+    try {
+      writeStored({ account, session });
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Could not save the local demo account.' };
+    }
     setUser(session);
     return { ok: true };
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     const stored = readStored();
     writeStored({ ...stored, session: null });
     setUser(null);
   }, []);
 
+  const unavailable = useCallback(async () => ({ ok: false, error: LOCAL_EMAIL_ERROR }), []);
+
+  const refreshUser = useCallback(async () => {
+    setUser(readStored().session);
+  }, []);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user, ready, login, register, logout }),
-    [user, ready, login, register, logout],
+    () => ({
+      user,
+      ready,
+      login,
+      register,
+      logout,
+      verifyEmail: unavailable,
+      resendVerification: unavailable,
+      forgotPassword: unavailable,
+      resetPassword: unavailable,
+      refreshUser,
+    }),
+    [user, ready, login, register, logout, unavailable, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -81,12 +81,11 @@ export default function Login() {
       </Button>
 
       <p className="auth-switch">
-        No demo account yet? <Link to="/register">Create one</Link>
+        <Link to="/forgot-password">Forgot password?</Link>
       </p>
 
-      <p className="auth-note">
-        Demo mode: this account lives only in your browser’s local storage. It is a UI gate, not real security —
-        see the README for local vs. production deployment.
+      <p className="auth-switch">
+        No account yet? <Link to="/register">Create one</Link>
       </p>
     </form>
   );

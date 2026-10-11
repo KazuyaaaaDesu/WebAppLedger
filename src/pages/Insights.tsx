@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Activity,
+  ArrowRight,
   Layers,
   Lightbulb,
   PiggyBank,
@@ -16,6 +17,7 @@ import { KpiCard } from '../components/ui/Kpi';
 import { LinkButton } from '../components/ui/Button';
 import { Badge, EmptyState, Progress, ProgressMeta } from '../components/ui/Indicators';
 import { CategoryStackedChart } from '../components/charts/Charts';
+import { Link } from 'react-router-dom';
 import { useLedger } from '../context/LedgerContext';
 import type { PeriodSelection } from '../types';
 import {
@@ -49,6 +51,17 @@ const TONE_ITEM = {
   warning: 'debt',
   error: 'debt',
 } as const;
+
+/** Surface the most urgent findings first: errors, then warnings, then the rest. */
+const TONE_SEVERITY: Record<string, number> = { error: 0, warning: 1, success: 2, info: 3 };
+
+/** Budget-related insights link straight to the page that can fix them. */
+function insightAction(id: string): { to: string; label: string } | null {
+  if (id.startsWith('budget-over-') || id.startsWith('budget-near-')) {
+    return { to: '/budgets', label: 'Review budgets' };
+  }
+  return null;
+}
 
 /**
  * FINANCIAL HEALTH & SMART INSIGHTS
@@ -86,7 +99,13 @@ export default function Insights() {
     () => emergencyFundCoverage(db.transactions, sumOpeningBalances(db.accounts), now),
     [db.transactions, db.accounts, now],
   );
-  const insights = useMemo(() => generateInsights(db, range, now), [db, range, now]);
+  const insights = useMemo(
+    () =>
+      [...generateInsights(db, range, now)].sort(
+        (a, b) => (TONE_SEVERITY[a.tone] ?? 3) - (TONE_SEVERITY[b.tone] ?? 3),
+      ),
+    [db, range, now],
+  );
   const recommendations = useMemo(() => generateRecommendations(db, now), [db, now]);
   const chart = useMemo(
     () => categoryTimeSeries(db.transactions, db.categories, range),
@@ -122,6 +141,7 @@ export default function Insights() {
         jp="健康診断"
         title="Financial Health"
         description="Savings rate, spending comparisons and insights calculated from your persisted ledger."
+        actions={<LinkButton to="/simulator" variant="ghost">Open Simulator</LinkButton>}
       />
 
       <div className="toolbar">
@@ -226,19 +246,27 @@ export default function Insights() {
             />
           ) : (
             <ul className="upcoming-list">
-              {insights.map((i) => (
-                <li key={i.id} className={`upcoming-item upcoming-item--${TONE_ITEM[i.tone]}`}>
-                  <div>
-                    <strong>{i.title}</strong>
-                    <span className="list-row-sub">{i.detail}</span>
-                  </div>
-                  <div className="upcoming-date">
-                    <Badge tone={TONE_BADGE[i.tone]}>
-                      {i.tone === 'info' ? 'info' : i.tone === 'error' ? 'over' : i.tone}
-                    </Badge>
-                  </div>
-                </li>
-              ))}
+              {insights.map((i) => {
+                const action = insightAction(i.id);
+                return (
+                  <li key={i.id} className={`upcoming-item upcoming-item--${TONE_ITEM[i.tone]}`}>
+                    <div>
+                      <strong>{i.title}</strong>
+                      <span className="list-row-sub">{i.detail}</span>
+                      {action && (
+                        <Link to={action.to} className="text-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                          {action.label} <ArrowRight size={13} aria-hidden="true" />
+                        </Link>
+                      )}
+                    </div>
+                    <div className="upcoming-date">
+                      <Badge tone={TONE_BADGE[i.tone]}>
+                        {i.tone === 'info' ? 'info' : i.tone === 'error' ? 'over' : i.tone}
+                      </Badge>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
@@ -350,16 +378,21 @@ export default function Insights() {
         )}
       </section>
 
-      {/* ---------- Assumptions ---------- */}
-      <p className="muted text-sm">
-        <strong>How these numbers are calculated:</strong> savings rate = (income − expenses) ÷ income
-        for the selected period; expense-to-income = expenses ÷ income; spending change compares the
-        current calendar month with the previous one using recorded expense dates; budget health uses
-        each budget’s own period; emergency-fund coverage = aggregate balance (sum of all account opening
-        balances + net of all transactions) ÷ average monthly expenses across the last 3 months that contain
-        recorded activity. Coverage is an estimate from historical data, not a forecast of future balances.
-        All amounts are integer centavos; percentages are display-only.
-      </p>
+      {/* ---------- Assumptions (disclosure, not a wall of text) ---------- */}
+      <details className="card" style={{ padding: 'var(--spacing-md)' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+          <Target size={15} aria-hidden="true" /> How these numbers are calculated
+        </summary>
+        <p className="muted text-sm" style={{ marginTop: 'var(--spacing-sm)' }}>
+          Savings rate = (income − expenses) ÷ income for the selected period; expense-to-income =
+          expenses ÷ income; spending change compares the current calendar month with the previous one
+          using recorded expense dates; budget health uses each budget's own period; emergency-fund
+          coverage = aggregate balance (sum of all account opening balances + net of all transactions) ÷
+          average monthly expenses across the last 3 months that contain recorded activity. Coverage is
+          an estimate from historical data, not a forecast of future balances. All amounts are integer
+          centavos; percentages are display-only.
+        </p>
+      </details>
     </div>
   );
 }

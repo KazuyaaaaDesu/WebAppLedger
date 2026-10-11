@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Pencil, Plus, Target, Trash2 } from 'lucide-react';
+import { FlaskConical, Pencil, Plus, Target, Trash2 } from 'lucide-react';
 
 import PageHeader from '../components/layout/PageHeader';
-import { Button } from '../components/ui/Button';
+import { Button, LinkButton } from '../components/ui/Button';
 import { Field, Input, Textarea } from '../components/ui/Field';
 import { ConfirmDialog, Modal } from '../components/ui/Modal';
 import { Badge, EmptyState, Progress, ProgressMeta } from '../components/ui/Indicators';
@@ -184,6 +184,14 @@ export default function Goals() {
                 </div>
                 <div className="row-actions">
                   <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
+                  <LinkButton
+                    to={`/simulator?goal=${goal.id}`}
+                    variant="ghost"
+                    size="sm"
+                    title={`Simulate extra saving for ${goal.title}`}
+                  >
+                    <FlaskConical size={14} aria-hidden="true" /> Simulate
+                  </LinkButton>
                   <button
                     type="button"
                     className="row-action"

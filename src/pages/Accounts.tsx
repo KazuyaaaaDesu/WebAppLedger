@@ -162,8 +162,8 @@ export default function Accounts() {
         description="Where your money lives — cash wallets, e-wallets and banks. Balances are always derived from the ledger."
         actions={
           <>
-            <LinkButton to="/ledger" variant="ghost" size="sm">
-              Ledger
+            <LinkButton to="/transactions" variant="ghost" size="sm">
+              Transactions
             </LinkButton>
             <Button onClick={() => openCreate()}>
               <Plus size={15} /> Add account

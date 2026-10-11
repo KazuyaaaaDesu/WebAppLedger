@@ -31,14 +31,13 @@ export default function Register() {
       setError(result.error ?? 'Registration failed.');
       return;
     }
-    // A new demo account becomes the app profile (name shown in the sidebar).
+    // Mirror the account into the local ledger profile (sidebar / dashboard name).
     updateProfile({ name: name.trim(), email: email.trim().toLowerCase() });
-    navigate('/dashboard', { replace: true });
   }
 
   return (
     <form className="auth-form" onSubmit={onSubmit} noValidate>
-      <h2>Create your demo account</h2>
+      <h2>Create your account</h2>
 
       {error && (
         <div className="form-alert form-alert-error" role="alert">
@@ -100,11 +99,6 @@ export default function Register() {
 
       <p className="auth-switch">
         Already registered? <Link to="/login">Sign in</Link>
-      </p>
-
-      <p className="auth-note">
-        This stores a salted password digest in this browser only. Do not reuse a real password — this is a
-        frontend demo, not production authentication.
       </p>
     </form>
   );

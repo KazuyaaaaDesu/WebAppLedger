@@ -3,7 +3,7 @@
 // Mounts the real route table with the real providers inside a MemoryRouter.
 // ============================================
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -13,6 +13,25 @@ import { AuthProvider } from '../context/AuthContext';
 import { LedgerProvider } from '../context/LedgerContext';
 import { ToastProvider } from '../context/ToastContext';
 import { STORAGE_KEYS } from '../constants';
+
+// The ledger API is optional in these tests; reject sync requests so local
+// storage remains the source of truth.
+vi.mock('../services/api', () => {
+  class ApiError extends Error {
+    status: number;
+    constructor(message: string, status = 400) {
+      super(message);
+      this.status = status;
+    }
+  }
+  const financeApi = {
+    exportData: async () => {
+      throw new ApiError('offline in tests', 0);
+    },
+    importData: async () => ({}),
+  };
+  return { ApiError, financeApi };
+});
 
 function renderApp(initialPath: string) {
   return render(
@@ -54,7 +73,7 @@ describe('public routes', () => {
 
   it('renders the register form', async () => {
     renderApp('/register');
-    expect(await screen.findByRole('heading', { name: /create your demo account/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /create your account/i })).toBeInTheDocument();
   });
 });
 
@@ -69,13 +88,13 @@ describe('protected routes', () => {
   const routes: [string, RegExp][] = [
     ['/dashboard', /welcome back/i],
     ['/accounts', /accounts/i],
-    ['/ledger', /accounting ledger/i],
     ['/transactions', /transactions/i],
     ['/budgets', /budgets/i],
     ['/goals', /savings goals/i],
     ['/debts', /debts & loans/i],
     ['/analytics', /analytics/i],
     ['/insights', /financial health/i],
+    ['/simulator', /financial simulator/i],
     ['/reports', /reports/i],
     ['/calendar', /calendar/i],
     ['/settings', /settings/i],
@@ -109,6 +128,12 @@ describe('protected routes', () => {
     renderApp('/budget');
     expect(await screen.findByRole('heading', { name: /budgets/i, level: 1 })).toBeInTheDocument();
   });
+
+  it('redirects the old /ledger path to the merged /transactions page', async () => {
+    signIn();
+    renderApp('/ledger');
+    expect(await screen.findByRole('heading', { name: /transactions/i, level: 1 })).toBeInTheDocument();
+  });
 });
 
 describe('demo authentication flow', () => {
@@ -122,6 +147,27 @@ describe('demo authentication flow', () => {
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(await screen.findByRole('heading', { name: /welcome back, sakura tester/i })).toBeInTheDocument();
+  });
+
+  it('signs in with a registered demo account without a server', async () => {
+    const user = userEvent.setup();
+    renderApp('/register');
+
+    await user.type(await screen.findByLabelText(/name/i), 'Sakura Tester');
+    await user.type(screen.getByLabelText(/email/i), 'sakura@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'supersecret1');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+    await screen.findByRole('heading', { name: /welcome back, sakura tester/i });
+
+    await user.click(screen.getByLabelText(/account menu/i));
+    await user.click(screen.getByRole('button', { name: /sign out/i }));
+    await screen.findByRole('heading', { name: /sign in/i });
+
+    await user.type(screen.getByLabelText(/email/i), 'sakura@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'supersecret1');
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }));
+
+    expect(await screen.findByText('Sakura Tester')).toBeInTheDocument();
   });
 
   it('rejects weak passwords on registration', async () => {

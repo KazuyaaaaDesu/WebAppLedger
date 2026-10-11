@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  ArrowDownUp,
   Download,
   Eye,
   Pencil,
@@ -22,9 +21,12 @@ import { useToast } from '../context/ToastContext';
 import type { Transaction, TransactionFilters } from '../types';
 import {
   computeRunningBalances,
+  computeTotals,
   filterTransactions,
   sortTransactions,
+  sumOpeningBalances,
   toMajor,
+  totalBalance,
 } from '../utils/finance';
 import { formatDate, formatCurrency } from '../utils/format';
 import { downloadCsv, todayFileStamp, transactionsToCsv } from '../utils/csv';
@@ -86,6 +88,33 @@ export default function Transactions() {
     }
     return map;
   }, [db.transactions, db.accounts]);
+
+  const totals = useMemo(() => computeTotals(filtered), [filtered]);
+
+  // Scope-aware opening balance: the selected account's opening balance, or
+  // the sum of every account when showing all. Paired with the current
+  // balance this frames the filtered rows inside a real accounting position.
+  const openingBalance = useMemo(() => {
+    if (filters.account && filters.account !== 'all') {
+      return db.accounts.find((a) => a.id === filters.account)?.openingBalance ?? 0;
+    }
+    return sumOpeningBalances(db.accounts);
+  }, [db.accounts, filters.account]);
+
+  // Current balance of the selected scope (opening + every transaction on it).
+  const currentBalance = useMemo(() => {
+    if (filters.account && filters.account !== 'all') {
+      const acc = db.accounts.find((a) => a.id === filters.account);
+      if (!acc) return 0;
+      return (
+        acc.openingBalance +
+        db.transactions
+          .filter((t) => t.account === acc.id)
+          .reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0)
+      );
+    }
+    return totalBalance(db.accounts, db.transactions);
+  }, [db.accounts, db.transactions, filters.account]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -253,22 +282,48 @@ export default function Transactions() {
       </div>
 
       {/* ---------- Results summary ---------- */}
-      <div className="results-line">
-        <span>
-          <ArrowDownUp size={14} aria-hidden="true" /> {filtered.length} of {db.transactions.length}{' '}
-          transactions
-        </span>
-        <span className="muted">
-          In view: income {formatCurrency(
-            filtered.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0),
-            db.settings.currency,
-          )}
-          {' · '}expense{' '}
-          {formatCurrency(
-            filtered.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
-            db.settings.currency,
-          )}
-        </span>
+      <div className="summary-strip">
+        <div className="summary-strip-note">
+          <strong>Scope:</strong>{' '}
+          {filters.account && filters.account !== 'all'
+            ? accountById.get(filters.account)?.name ?? 'Account'
+            : 'All accounts'}
+          . Opening balance <span className="mono-num">{formatCurrency(openingBalance, db.settings.currency)}</span>
+          {filters.account && filters.account !== 'all' ? '' : ' (sum of all accounts)'}; the current balance
+          below is the live position, while the credit/debit totals reflect only the {filtered.length} filtered
+          row(s).
+        </div>
+        <div className="list-row-figures">
+          <div className="figure">
+            <span className="figure-label">Showing</span>
+            <span className="figure-value">
+              {filtered.length}
+              <span className="muted"> / {db.transactions.length}</span>
+            </span>
+          </div>
+          <div className="figure">
+            <span className="figure-label">Credits</span>
+            <span className="figure-value amount-income">
+              {formatCurrency(totals.income, db.settings.currency)}
+            </span>
+          </div>
+          <div className="figure">
+            <span className="figure-label">Debits</span>
+            <span className="figure-value amount-expense">
+              {formatCurrency(totals.expense, db.settings.currency)}
+            </span>
+          </div>
+          <div className="figure">
+            <span className="figure-label">Net (filtered)</span>
+            <span className="figure-value">
+              {formatCurrency(totals.net, db.settings.currency, { showSign: true })}
+            </span>
+          </div>
+          <div className="figure">
+            <span className="figure-label">Current balance</span>
+            <span className="figure-value">{formatCurrency(currentBalance, db.settings.currency)}</span>
+          </div>
+        </div>
       </div>
 
       {/* ---------- Table ---------- */}
