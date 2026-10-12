@@ -11,9 +11,6 @@ import AppLayout from '../layouts/AppLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
-import VerifyEmail from '../pages/auth/VerifyEmail';
-import ForgotPassword from '../pages/auth/ForgotPassword';
-import ResetPassword from '../pages/auth/ResetPassword';
 import NotFound from '../pages/NotFound';
 
 // Route-level code splitting keeps the initial bundle small (Recharts pages
@@ -43,13 +40,10 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
-      {/* Public: demo auth */}
+      {/* Public: demo auth (local only — no server) */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
       {/* Protected: single shared shell (sidebar + navbar + outlet) */}

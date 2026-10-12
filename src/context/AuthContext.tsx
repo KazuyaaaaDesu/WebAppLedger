@@ -10,7 +10,6 @@ import { STORAGE_KEYS } from '../constants';
 export interface AuthUser {
   name: string;
   email: string;
-  isVerified: boolean;
 }
 
 interface StoredAuth {
@@ -25,17 +24,11 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
-  verifyEmail: (token: string) => Promise<{ ok: boolean; error?: string }>;
-  resendVerification: (email: string) => Promise<{ ok: boolean; error?: string }>;
-  forgotPassword: (email: string) => Promise<{ ok: boolean; error?: string }>;
-  resetPassword: (token: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const EMPTY_AUTH: StoredAuth = { account: null, session: null };
-const LOCAL_EMAIL_ERROR = 'Email verification and password reset are unavailable in local demo mode.';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function readStored(): StoredAuth {
@@ -59,7 +52,7 @@ function readStored(): StoredAuth {
         : null;
     const session =
       value.session && typeof value.session.name === 'string' && typeof value.session.email === 'string'
-        ? { name: value.session.name, email: value.session.email, isVerified: true }
+        ? { name: value.session.name, email: value.session.email }
         : null;
 
     return { account, session };
@@ -123,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const hash = await digest(password, stored.account.salt);
     if (hash !== stored.account.hash) return { ok: false, error: 'Incorrect email or password.' };
 
-    const session: AuthUser = { name: stored.account.name, email: stored.account.email, isVerified: true };
+    const session: AuthUser = { name: stored.account.name, email: stored.account.email };
     try {
       writeStored({ ...stored, session });
     } catch (err) {
@@ -148,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const salt = makeSalt();
     const hash = await digest(password, salt);
     const account = { name: trimmedName, email: trimmed, salt, hash };
-    const session: AuthUser = { name: trimmedName, email: trimmed, isVerified: true };
+    const session: AuthUser = { name: trimmedName, email: trimmed };
     try {
       writeStored({ account, session });
     } catch (err) {
@@ -164,12 +157,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  const unavailable = useCallback(async () => ({ ok: false, error: LOCAL_EMAIL_ERROR }), []);
-
-  const refreshUser = useCallback(async () => {
-    setUser(readStored().session);
-  }, []);
-
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -177,13 +164,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       register,
       logout,
-      verifyEmail: unavailable,
-      resendVerification: unavailable,
-      forgotPassword: unavailable,
-      resetPassword: unavailable,
-      refreshUser,
     }),
-    [user, ready, login, register, logout, unavailable, refreshUser],
+    [user, ready, login, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

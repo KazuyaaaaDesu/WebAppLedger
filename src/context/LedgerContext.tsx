@@ -3,17 +3,13 @@
 // All mutations validate, apply deterministic state changes, and persist
 // through the repository layer. Components never touch localStorage.
 //
-// When a user is signed in, the ledger also syncs with the Sakura Ledger
-// API in the background: it hydrates from the server on login and pushes
-// the full dataset after each change (debounced). localStorage stays the
-// fast local cache so the UI never blocks on the network.
+// The app is frontend-only: localStorage is the single source of truth and
+// there is no server synchronization of any kind.
 // ============================================
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { useAuth } from './AuthContext';
 import { createSeedDatabase } from '../data/seed';
-import { financeApi } from '../services/api';
 import { loadDatabase, parseBackup, saveDatabase } from '../services/repository';
 import type {
   Account,
@@ -104,119 +100,11 @@ function defaultAccountId(accounts: Account[]): string {
   return accounts.find((a) => !a.archived)?.id ?? accounts[0]?.id ?? '';
 }
 
-// ---------- API <-> Database conversion (background sync) ----------
-// The server stores centavo integers and camelCase ids that match the
-// frontend shape closely; we only remap the few field-name differences.
-
-interface ApiExportRecord {
-  id: string;
-  [key: string]: unknown;
-}
-
-function apiPayloadFromDb(db: Database): Record<string, unknown> {
-  return {
-    accounts: db.accounts.map((a) => ({
-      id: a.id, name: a.name, group: a.group, openingBalance: a.openingBalance, archived: a.archived,
-    })),
-    transactions: db.transactions.map((t) => ({
-      id: t.id, date: t.date, description: t.description, type: t.type,
-      categoryId: t.category, amount: t.amount, paymentMethodId: t.paymentMethod,
-      accountId: t.account, reference: t.reference ?? null, notes: t.notes ?? null,
-    })),
-    transfers: [],
-    categories: db.categories.map((c) => ({
-      id: c.id, name: c.name, type: c.type, color: c.color, builtin: c.builtin,
-    })),
-    payment_methods: db.paymentMethods.map((p) => ({ id: p.id, name: p.name, builtin: p.builtin })),
-    budgets: db.budgets.map((b) => ({
-      id: b.id, categoryId: b.categoryId, period: b.period, periodKey: b.periodKey,
-      limit: b.limit, notes: b.notes ?? null,
-    })),
-    savings_goals: db.goals.map((g) => ({
-      id: g.id, title: g.title, description: g.description ?? null, target: g.target,
-      saved: g.saved, deadline: g.deadline ?? null,
-    })),
-    debts: db.debts.map((d) => ({
-      id: d.id, direction: d.direction, party: d.party, originalAmount: d.originalAmount,
-      dueDate: d.dueDate ?? null, notes: d.notes ?? null,
-      payments: d.payments.map((p) => ({ id: p.id, date: p.date, amount: p.amount, notes: p.notes ?? null })),
-    })),
-  };
-}
-
-/** Map a /data/export response into a full Database (server -> local). */
-function dbFromApiExport(raw: Record<string, unknown>, profile: Profile): Database {
-  const now = new Date().toISOString();
-  const asArr = (v: unknown): ApiExportRecord[] => (Array.isArray(v) ? (v as ApiExportRecord[]) : []);
-  const str = (v: unknown): string => (typeof v === 'string' ? v : '');
-  const num = (v: unknown): number => (typeof v === 'number' ? v : 0);
-
-  return {
-    version: 2,
-    profile,
-    settings: {
-      theme: 'light', currency: 'PHP', dateFormat: 'YYYY-MM-DD', openingBalance: 0, compactSidebar: false,
-    },
-    accounts: asArr(raw.accounts).map((a) => ({
-      id: str(a.id), name: str(a.name),
-      group: a.group === 'stashed' ? 'stashed' : 'held',
-      openingBalance: num(a.openingBalance), archived: Boolean(a.archived),
-      createdAt: now, updatedAt: now,
-    })),
-    transactions: asArr(raw.transactions).map((t) => ({
-      id: str(t.id), date: str(t.date), description: str(t.description),
-      type: t.type === 'income' ? 'income' : 'expense',
-      category: str(t.categoryId), amount: num(t.amount),
-      paymentMethod: str(t.paymentMethodId), account: str(t.accountId),
-      reference: typeof t.reference === 'string' ? t.reference : undefined,
-      notes: typeof t.notes === 'string' ? t.notes : undefined,
-      createdAt: now, updatedAt: now,
-    })),
-    categories: asArr(raw.categories).map((c) => ({
-      id: str(c.id), name: str(c.name), type: c.type === 'income' ? 'income' : 'expense',
-      color: str(c.color) || '#94A3B8', builtin: Boolean(c.builtin),
-    })),
-    paymentMethods: asArr(raw.payment_methods).map((p) => ({
-      id: str(p.id), name: str(p.name), builtin: Boolean(p.builtin),
-    })),
-    budgets: asArr(raw.budgets).map((b) => ({
-      id: str(b.id), categoryId: str(b.categoryId),
-      period: b.period === 'yearly' ? 'yearly' : 'monthly',
-      periodKey: str(b.periodKey), limit: num(b.limit),
-      notes: typeof b.notes === 'string' ? b.notes : undefined,
-    })),
-    goals: asArr(raw.savings_goals).map((g) => ({
-      id: str(g.id), title: str(g.title),
-      description: typeof g.description === 'string' ? g.description : undefined,
-      target: num(g.target), saved: num(g.saved),
-      deadline: typeof g.deadline === 'string' ? g.deadline : undefined,
-      createdAt: now,
-    })),
-    debts: asArr(raw.debts).map((d) => ({
-      id: str(d.id), direction: d.direction === 'owedToMe' ? 'owedToMe' : 'iOwe',
-      party: str(d.party), originalAmount: num(d.originalAmount),
-      dueDate: typeof d.dueDate === 'string' ? d.dueDate : undefined,
-      notes: typeof d.notes === 'string' ? d.notes : undefined,
-      createdAt: now,
-      payments: asArr(d.payments).map((p) => ({
-        id: str(p.id), date: str(p.date), amount: num(p.amount),
-        notes: typeof p.notes === 'string' ? p.notes : undefined,
-      })),
-    })),
-  };
-}
-
 export function LedgerProvider({ children }: { children: React.ReactNode }) {
-  const { user, ready: authReady } = useAuth();
   const initial = useMemo(() => loadDatabase(), []);
   const [db, setDb] = useState<Database>(initial.db);
   const [dataSource, setDataSource] = useState<'seed' | 'storage'>(initial.source);
   const [persisted, setPersisted] = useState(true);
-
-  // Skip the very first push right after a server hydrate so we don't
-  // immediately echo the data we just pulled back to the server.
-  const skipNextPush = useRef(true);
-  const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Persist on every change (skip the very first render — it is already stored).
   useEffect(() => {
@@ -228,60 +116,6 @@ export function LedgerProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.dataset.theme = db.settings.theme;
     document.documentElement.style.colorScheme = db.settings.theme;
   }, [db.settings.theme]);
-
-  // Hydrate from the server when a session becomes available; reset to the
-  // seed dataset on sign-out so one user's numbers never bleed into the next.
-  useEffect(() => {
-    if (!authReady) return;
-    if (!user) {
-      setDb(createSeedDatabase());
-      setDataSource('seed');
-      return;
-    }
-    let cancelled = false;
-    financeApi
-      .exportData()
-      .then((raw) => {
-        if (cancelled) return;
-        const serverDb = dbFromApiExport(raw, { name: user.name, email: user.email });
-        // Only replace local state when the server actually has data; an empty
-        // server account keeps the existing local dataset so first login can
-        // seed the server from what the user already has.
-        const hasServerData =
-          serverDb.accounts.length > 0 || serverDb.transactions.length > 0 || serverDb.categories.length > 0;
-        if (hasServerData) {
-          skipNextPush.current = true;
-          // Keep local UI preferences (theme, date format, sidebar) — they are
-          // device-specific, not account data.
-          setDb((prev) => ({ ...serverDb, settings: prev.settings }));
-          setDataSource('storage');
-        }
-      })
-      .catch(() => {
-        // Offline or API unreachable — localStorage remains the source of truth.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [authReady, user]);
-
-  // Debounced background push to the server after local changes.
-  useEffect(() => {
-    if (!authReady || !user) return;
-    if (skipNextPush.current) {
-      skipNextPush.current = false;
-      return;
-    }
-    if (pushTimer.current) clearTimeout(pushTimer.current);
-    pushTimer.current = setTimeout(() => {
-      financeApi.importData(apiPayloadFromDb(db)).catch(() => {
-        // Offline — local state is still saved to localStorage.
-      });
-    }, 800);
-    return () => {
-      if (pushTimer.current) clearTimeout(pushTimer.current);
-    };
-  }, [db, authReady, user]);
 
   const update = useCallback((updater: (prev: Database) => Database) => {
     setDb((prev) => updater(prev));

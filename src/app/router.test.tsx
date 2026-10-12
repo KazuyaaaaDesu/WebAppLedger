@@ -3,7 +3,7 @@
 // Mounts the real route table with the real providers inside a MemoryRouter.
 // ============================================
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -13,25 +13,6 @@ import { AuthProvider } from '../context/AuthContext';
 import { LedgerProvider } from '../context/LedgerContext';
 import { ToastProvider } from '../context/ToastContext';
 import { STORAGE_KEYS } from '../constants';
-
-// The ledger API is optional in these tests; reject sync requests so local
-// storage remains the source of truth.
-vi.mock('../services/api', () => {
-  class ApiError extends Error {
-    status: number;
-    constructor(message: string, status = 400) {
-      super(message);
-      this.status = status;
-    }
-  }
-  const financeApi = {
-    exportData: async () => {
-      throw new ApiError('offline in tests', 0);
-    },
-    importData: async () => ({}),
-  };
-  return { ApiError, financeApi };
-});
 
 function renderApp(initialPath: string) {
   return render(
@@ -167,7 +148,46 @@ describe('demo authentication flow', () => {
     await user.type(screen.getByLabelText(/password/i), 'supersecret1');
     await user.click(screen.getByRole('button', { name: /^sign in$/i }));
 
-    expect(await screen.findByText('Sakura Tester')).toBeInTheDocument();
+    // Signed in again — the name shows in the navbar and in the local profile.
+    expect(await screen.findByRole('heading', { name: /welcome back, sakura tester/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Sakura Tester').length).toBeGreaterThan(0);
+  });
+
+  it('keeps local ledger data after signing out and back in', async () => {
+    const user = userEvent.setup();
+    renderApp('/register');
+
+    await user.type(await screen.findByLabelText(/name/i), 'Sakura Tester');
+    await user.type(screen.getByLabelText(/email/i), 'sakura@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'supersecret1');
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+    await screen.findByRole('heading', { name: /welcome back, sakura tester/i });
+
+    // Record a transaction while signed in.
+    const sidebar = screen.getByRole('complementary', { name: 'Primary' });
+    await user.click(within(sidebar).getByRole('link', { name: /transactions/i }));
+    await screen.findByRole('heading', { name: /transactions/i, level: 1 });
+    await user.click(screen.getByRole('button', { name: /add transaction/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText(/description/i), 'Persisted ramen');
+    await user.type(within(dialog).getByLabelText(/amount/i), '99.50');
+    await user.click(within(dialog).getByRole('button', { name: /^add transaction$/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Persisted ramen')).toBeInTheDocument();
+    });
+
+    // Sign out and back in — the record must survive (localStorage only).
+    await user.click(screen.getByLabelText(/account menu/i));
+    await user.click(screen.getByRole('button', { name: /sign out/i }));
+    await screen.findByRole('heading', { name: /sign in/i });
+
+    await user.type(screen.getByLabelText(/email/i), 'sakura@example.com');
+    await user.type(screen.getByLabelText(/password/i), 'supersecret1');
+    await user.click(screen.getByRole('button', { name: /^sign in$/i }));
+
+    // Signed back in — the persisted row is still listed on the ledger page.
+    expect(await screen.findByRole('heading', { name: /transactions/i, level: 1 })).toBeInTheDocument();
+    expect(await screen.findByText('Persisted ramen')).toBeInTheDocument();
   });
 
   it('rejects weak passwords on registration', async () => {

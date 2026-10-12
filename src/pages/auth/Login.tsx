@@ -81,10 +81,6 @@ export default function Login() {
       </Button>
 
       <p className="auth-switch">
-        <Link to="/forgot-password">Forgot password?</Link>
-      </p>
-
-      <p className="auth-switch">
         No account yet? <Link to="/register">Create one</Link>
       </p>
     </form>
