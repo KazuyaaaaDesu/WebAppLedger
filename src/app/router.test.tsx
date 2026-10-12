@@ -89,6 +89,17 @@ describe('protected routes', () => {
     });
   }
 
+  it('shows the six consolidated primary sections and grouped workspace tabs', async () => {
+    signIn();
+    renderApp('/money/transactions');
+    await screen.findByRole('heading', { name: /transactions/i, level: 1 });
+    const sidebar = screen.getByRole('complementary', { name: 'Primary' });
+    expect(within(sidebar).getAllByRole('link')).toHaveLength(6);
+    expect(within(sidebar).getByRole('link', { name: /^money$/i })).toHaveAttribute('href', '/money/transactions');
+    expect(screen.getByRole('navigation', { name: /money tools/i })).toBeInTheDocument();
+    expect(within(screen.getByRole('navigation', { name: /money tools/i })).getByRole('link', { name: /accounts/i })).toHaveAttribute('href', '/money/accounts');
+  });
+
   it('keeps sidebar navigation on the same layout (no duplicate shell)', async () => {
     signIn();
     renderApp('/budgets');
@@ -165,7 +176,7 @@ describe('demo authentication flow', () => {
 
     // Record a transaction while signed in.
     const sidebar = screen.getByRole('complementary', { name: 'Primary' });
-    await user.click(within(sidebar).getByRole('link', { name: /transactions/i }));
+    await user.click(within(sidebar).getByRole('link', { name: /^money$/i }));
     await screen.findByRole('heading', { name: /transactions/i, level: 1 });
     await user.click(screen.getByRole('button', { name: /add transaction/i }));
     const dialog = await screen.findByRole('dialog');

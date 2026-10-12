@@ -231,12 +231,12 @@ export default function Simulator() {
 
   // ---------- Warnings & recommendations (derived, never invented) ----------
   const warnings: string[] = [];
-  if (activeKind === 'buy' && !parsedPurchase.ok) warnings.push(`Purchase: ${parsedPurchase.reason}`);
-  if (activeKind === 'reduce' && !parsedReduction.ok)
+  if (activeKind === 'buy' && parsedPurchase.ok === false) warnings.push(`Purchase: ${parsedPurchase.reason}`);
+  if (activeKind === 'reduce' && parsedReduction.ok === false)
     warnings.push(`Spending reduction: ${parsedReduction.reason}`);
-  if (activeKind === 'save' && !parsedSavings.ok)
+  if (activeKind === 'save' && parsedSavings.ok === false)
     warnings.push(`Extra monthly savings: ${parsedSavings.reason}`);
-  if (activeKind === 'debt' && !parsedDebtPayment.ok)
+  if (activeKind === 'debt' && parsedDebtPayment.ok === false)
     warnings.push(`Extra debt payment: ${parsedDebtPayment.reason}`);
   if (purchaseCents > 0 && !purchaseSim.affordable) {
     warnings.push(
@@ -498,7 +498,7 @@ export default function Simulator() {
               <>
                 <Field
                   label="Purchase amount"
-                  error={parsedPurchase.ok ? undefined : parsedPurchase.reason}
+                  error={parsedPurchase.ok === true ? undefined : parsedPurchase.reason}
                   hint={
                     purchaseCents > 0 && !purchaseSim.affordable
                       ? `Exceeds available cash by ${formatCurrency(purchaseSim.shortfall, cur)}`
@@ -577,7 +577,7 @@ export default function Simulator() {
                 </Field>
                 <Field
                   label={reductionMode === 'amount' ? 'Cut per month' : 'Cut by %'}
-                  error={parsedReduction.ok ? undefined : parsedReduction.reason}
+                  error={parsedReduction.ok === true ? undefined : parsedReduction.reason}
                 >
                   {({ id, 'aria-invalid': invalid, 'aria-describedby': describedBy }) => (
                     <Input
@@ -598,7 +598,7 @@ export default function Simulator() {
               <>
                 <Field
                   label="Save extra per month"
-                  error={parsedSavings.ok ? undefined : parsedSavings.reason}
+                  error={parsedSavings.ok === true ? undefined : parsedSavings.reason}
                   hint="Added on top of your recorded monthly cash flow"
                 >
                   {({ id, 'aria-invalid': invalid, 'aria-describedby': describedBy }) => (
@@ -665,7 +665,7 @@ export default function Simulator() {
                   />
                   <Field
                     label="Extra payment"
-                    error={parsedDebtPayment.ok ? undefined : parsedDebtPayment.reason}
+                    error={parsedDebtPayment.ok === true ? undefined : parsedDebtPayment.reason}
                     hint="Immediate cash outflow; reduces the remaining balance"
                   >
                     {({ id, 'aria-invalid': invalid, 'aria-describedby': describedBy }) => (

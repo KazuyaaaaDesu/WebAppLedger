@@ -52,15 +52,9 @@ export interface NavItem {
 /** Single source of truth for primary navigation. */
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', link: '/dashboard', icon: 'LayoutDashboard' },
-  { label: 'Accounts', link: '/accounts', icon: 'Landmark' },
-  { label: 'Transactions', link: '/transactions', icon: 'ArrowLeftRight' },
-  { label: 'Budgets', link: '/budgets', icon: 'Wallet' },
-  { label: 'Goals', link: '/goals', icon: 'Target' },
-  { label: 'Debts', link: '/debts', icon: 'HandCoins' },
-  { label: 'Analytics', link: '/analytics', icon: 'ChartLine' },
-  { label: 'Insights', link: '/insights', icon: 'Activity' },
-  { label: 'Simulator', link: '/simulator', icon: 'FlaskConical' },
-  { label: 'Reports', link: '/reports', icon: 'FileBarChart' },
+  { label: 'Money', link: '/money/transactions', icon: 'Wallet' },
+  { label: 'Planning', link: '/planning/budgets', icon: 'Target' },
+  { label: 'Financial Intelligence', link: '/intelligence/analytics', icon: 'ChartLine' },
   { label: 'Calendar', link: '/calendar', icon: 'CalendarDays' },
   { label: 'Settings', link: '/settings', icon: 'Settings' },
 ];

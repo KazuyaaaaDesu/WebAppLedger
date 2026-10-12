@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   Activity,
   BookOpen,
@@ -45,6 +45,7 @@ interface SidebarProps {
 
 export default function Sidebar({ onNavigate, onClose }: SidebarProps) {
   const { db } = useLedger();
+  const location = useLocation();
 
   return (
     <aside className="sidebar" aria-label="Primary">
@@ -81,7 +82,12 @@ export default function Sidebar({ onNavigate, onClose }: SidebarProps) {
               <li key={item.link} className="sidebar-item">
                 <NavLink
                   to={item.link}
-                  className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  className={({ isActive }) => {
+                    const groupedActive = (item.link.startsWith('/money') && location.pathname.startsWith('/money'))
+                      || (item.link.startsWith('/planning') && location.pathname.startsWith('/planning'))
+                      || (item.link.startsWith('/intelligence') && location.pathname.startsWith('/intelligence'));
+                    return `sidebar-link ${isActive || groupedActive ? 'active' : ''}`;
+                  }}
                   onClick={onNavigate}
                 >
                   <span className="icon" aria-hidden="true">
