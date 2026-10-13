@@ -18,13 +18,13 @@ interface SectionHubProps {
 export default function SectionHub({ title, description, tabs }: SectionHubProps) {
   return (
     <div className="section-hub">
-      <header className="section-hub-heading">
+      <div className="section-hub-heading">
         <div>
           <p className="section-hub-eyebrow">WORKSPACE</p>
           <h2>{title}</h2>
           <p>{description}</p>
         </div>
-      </header>
+      </div>
       <nav className="section-tabs" aria-label={`${title} tools`}>
         {tabs.map((tab) => (
           <NavLink key={tab.to} to={tab.to} className={({ isActive }) => `section-tab${isActive ? ' is-active' : ''}`}>

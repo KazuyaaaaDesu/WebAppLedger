@@ -43,6 +43,11 @@ export function sanitizeDatabase(raw: unknown): Database | null {
   const settings = raw.settings;
   if (typeof settings.openingBalance !== 'number' || !Number.isInteger(settings.openingBalance)) return null;
   if (settings.theme !== 'light' && settings.theme !== 'dark') return null;
+  // Older saved databases/backups predate colorTheme; preserve them with the default palette.
+  if (settings.colorTheme === undefined) settings.colorTheme = 'sakura';
+  if (!['sakura', 'ocean', 'mint', 'sunset', 'lavender'].includes(settings.colorTheme as string)) {
+    settings.colorTheme = 'sakura';
+  }
   if (!['YYYY-MM-DD', 'MM/DD/YYYY', 'DD/MM/YYYY'].includes(settings.dateFormat as string)) return null;
 
   const db = raw as unknown as Database;

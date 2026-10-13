@@ -138,7 +138,7 @@
 
 .field-control[aria-invalid='true'] {
   border-color: var(--brand-error);
-  background-color: #fff5f7;
+  background-color: rgba(229, 62, 109, 0.06);
 }
 
 textarea.field-control {
@@ -183,15 +183,15 @@ textarea.field-control {
 }
 
 .form-alert-error {
-  background-color: #fdecef;
-  color: #a11942;
-  border: 1px solid #f8c6d4;
+  background-color: rgba(229, 62, 109, 0.08);
+  color: #8d1d3f;
+  border: 1px solid rgba(229, 62, 109, 0.2);
 }
 
 .form-alert-success {
-  background-color: #e9f8f0;
-  color: #0d7a55;
-  border: 1px solid #bfe9d6;
+  background-color: rgba(16, 185, 129, 0.08);
+  color: #0d6f4d;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 /* ---------- Badge ---------- */
@@ -210,22 +210,22 @@ textarea.field-control {
 
 .badge-income,
 .badge-success {
-  background-color: #e6f7f0;
-  color: #0a6b4a;
-  border-color: #b6e7d4;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #0c6d4d;
+  border-color: rgba(16, 185, 129, 0.2);
 }
 
 .badge-expense,
 .badge-error {
-  background-color: #fdecef;
-  color: #a11942;
-  border-color: #f8c6d4;
+  background-color: rgba(229, 62, 109, 0.08);
+  color: #8d1d3f;
+  border-color: rgba(229, 62, 109, 0.18);
 }
 
 .badge-warning {
-  background-color: #fef4e2;
+  background-color: rgba(245, 158, 11, 0.11);
   color: #8a5a06;
-  border-color: #f7ddb0;
+  border-color: rgba(245, 158, 11, 0.24);
 }
 
 .badge-neutral {
@@ -235,9 +235,9 @@ textarea.field-control {
 }
 
 .badge-accent {
-  background-color: #f0ecfe;
-  color: #4c3fb0;
-  border-color: #d8cffb;
+  background-color: rgba(185, 167, 245, 0.12);
+  color: #4d3fad;
+  border-color: rgba(185, 167, 245, 0.24);
 }
 
 /* ---------- Modal ---------- */

@@ -114,8 +114,9 @@ export function LedgerProvider({ children }: { children: React.ReactNode }) {
   // Reflect the theme on <html> so CSS tokens can switch modes.
   useEffect(() => {
     document.documentElement.dataset.theme = db.settings.theme;
+    document.documentElement.dataset.colorTheme = db.settings.colorTheme ?? 'sakura';
     document.documentElement.style.colorScheme = db.settings.theme;
-  }, [db.settings.theme]);
+  }, [db.settings.theme, db.settings.colorTheme]);
 
   const update = useCallback((updater: (prev: Database) => Database) => {
     setDb((prev) => updater(prev));

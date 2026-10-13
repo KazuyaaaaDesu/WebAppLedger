@@ -178,7 +178,7 @@ describe('ValidationError', () => {
 describe('validateBackup', () => {
   const good = {
     version: 1,
-    settings: { theme: 'light', currency: 'PHP', dateFormat: 'YYYY-MM-DD', openingBalance: 0, compactSidebar: false },
+    settings: { theme: 'light', colorTheme: 'sakura', currency: 'PHP', dateFormat: 'YYYY-MM-DD', openingBalance: 0, compactSidebar: false },
     profile: { name: 'A', email: 'a@b.c' },
     categories: BUILTIN_CATEGORIES,
     paymentMethods: BUILTIN_PAYMENT_METHODS,

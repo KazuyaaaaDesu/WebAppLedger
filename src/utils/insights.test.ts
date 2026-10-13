@@ -65,6 +65,7 @@ function dbWith(partial: Partial<Database>): Database {
     profile: { name: 'Test', email: 'test@example.com' },
     settings: {
       theme: 'light',
+      colorTheme: 'sakura',
       currency: 'PHP',
       dateFormat: 'YYYY-MM-DD',
       openingBalance: 0,

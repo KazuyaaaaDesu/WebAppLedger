@@ -9,7 +9,7 @@ import { ConfirmDialog, Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Indicators';
 import { useLedger } from '../context/LedgerContext';
 import { useToast } from '../context/ToastContext';
-import type { Category, DateFormat, ThemeMode, TransactionType } from '../types';
+import type { Category, ColorTheme, DateFormat, ThemeMode, TransactionType } from '../types';
 import { downloadJson, todayFileStamp } from '../utils/csv';
 
 const FALLBACK_COLORS = ['#F7A8B8', '#B9A7F5', '#7EC8E3', '#F59E0B', '#10B981', '#E879A0', '#818CF8', '#60A5FA'];
@@ -149,8 +149,8 @@ export default function Settings() {
           </div>
 
           <div className="settings-row">
-            <span className="field-label">Theme</span>
-            <div className="segmented" role="group" aria-label="Theme" style={{ maxWidth: 260 }}>
+            <span className="field-label">Color mode</span>
+            <div className="segmented" role="group" aria-label="Color mode" style={{ maxWidth: 260 }}>
               {(['light', 'dark'] as ThemeMode[]).map((mode) => (
                 <button
                   key={mode}
@@ -159,7 +159,38 @@ export default function Settings() {
                   aria-pressed={db.settings.theme === mode}
                   onClick={() => updateSettings({ theme: mode })}
                 >
-                  {mode === 'light' ? 'Light' : 'Dark'}
+                  {mode === 'light' ? '☀ Light' : '☾ Dark'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="settings-row settings-palette-row">
+            <div>
+              <span className="field-label">Accent palette</span>
+              <p className="muted text-sm" style={{ margin: '4px 0 0' }}>Pick the vibe. Your choice is saved with your settings.</p>
+            </div>
+            <div className="theme-palette-grid" role="group" aria-label="Accent color palette">
+              {([
+                { id: 'sakura', name: 'Sakura', colors: ['#F7A8B8', '#B9A7F5', '#3F4E8C'] },
+                { id: 'ocean', name: 'Ocean', colors: ['#67C7D4', '#7EA7FF', '#245B83'] },
+                { id: 'mint', name: 'Mint', colors: ['#6DD6B0', '#A3E6D4', '#246B5A'] },
+                { id: 'sunset', name: 'Sunset', colors: ['#FFAB76', '#FF7D9C', '#9A456C'] },
+                { id: 'lavender', name: 'Lavender', colors: ['#C4B5FD', '#E4B8E8', '#6554A4'] },
+              ] as { id: ColorTheme; name: string; colors: string[] }[]).map((palette) => (
+                <button
+                  key={palette.id}
+                  type="button"
+                  className={`theme-palette ${db.settings.colorTheme === palette.id ? 'is-selected' : ''}`}
+                  onClick={() => updateSettings({ colorTheme: palette.id })}
+                  aria-pressed={db.settings.colorTheme === palette.id}
+                  aria-label={`${palette.name} palette${db.settings.colorTheme === palette.id ? ', selected' : ''}`}
+                >
+                  <span className="theme-swatches" aria-hidden="true">
+                    {palette.colors.map((color) => <span key={color} style={{ backgroundColor: color }} />)}
+                  </span>
+                  <span className="theme-palette-name">{palette.name}</span>
+                  {db.settings.colorTheme === palette.id && <span className="theme-selected-mark" aria-hidden="true">✓</span>}
                 </button>
               ))}
             </div>

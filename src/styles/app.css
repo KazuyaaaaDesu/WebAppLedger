@@ -932,3 +932,44 @@ body {
 [data-theme='dark'] .segmented-btn.is-active.is-expense {
   color: #0F1222;
 }
+
+
+/* Appearance settings: visual palette picker */
+.settings-palette-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-sm);
+}
+.theme-palette-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.theme-palette {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 8px;
+  border: 1px solid var(--brand-border);
+  border-radius: 12px;
+  background: var(--brand-card);
+  color: var(--brand-text);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+}
+.theme-palette:hover { transform: translateY(-1px); border-color: var(--brand-accent); }
+.theme-palette:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.theme-palette.is-selected { border: 2px solid var(--brand-primary); padding: 9px 7px; box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-primary) 12%, transparent); }
+.theme-swatches { display: flex; height: 26px; overflow: hidden; border-radius: 7px; }
+.theme-swatches span { flex: 1; }
+.theme-palette-name { font-size: var(--text-sm); font-weight: var(--weight-medium); }
+.theme-selected-mark { position: absolute; top: 5px; right: 6px; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--brand-primary); color: white; font-size: 12px; }
+@media (max-width: 560px) {
+  .theme-palette-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

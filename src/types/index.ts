@@ -113,10 +113,13 @@ export interface PaymentMethod {
 }
 
 export type ThemeMode = 'light' | 'dark';
+export type ColorTheme = 'sakura' | 'ocean' | 'mint' | 'sunset' | 'lavender';
 export type DateFormat = 'YYYY-MM-DD' | 'MM/DD/YYYY' | 'DD/MM/YYYY';
 
 export interface Settings {
   theme: ThemeMode;
+  /** Accent palette preference, independent from light/dark mode. */
+  colorTheme: ColorTheme;
   currency: 'PHP';
   dateFormat: DateFormat;
   /**

@@ -1,129 +1,61 @@
-.auth-shell {
+.app-shell {
+  display: flex;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg) var(--spacing-md);
   background-color: var(--brand-bg);
+  /* Soft atmospheric backdrop: sakura light on warm paper */
   background-image:
-    radial-gradient(700px 400px at 15% 0%, rgba(247, 168, 184, 0.35), transparent 60%),
-    radial-gradient(700px 420px at 90% 100%, rgba(185, 167, 245, 0.3), transparent 60%);
-  position: relative;
-  overflow: hidden;
+    radial-gradient(1000px 500px at 85% -10%, var(--theme-glow-one), transparent 60%),
+    radial-gradient(800px 420px at -5% 10%, var(--theme-glow-two), transparent 55%);
+  background-attachment: fixed;
 }
 
-/* Decorative petals — purely visual, never intercept pointer events */
-.auth-petals span {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  background: linear-gradient(135deg, var(--color-sakura), rgba(247, 168, 184, 0.2));
-  border-radius: 60% 10% 60% 10%;
-  opacity: 0.5;
-  animation: petal-fall 16s linear infinite;
-  pointer-events: none;
+.app-sidebar {
+  flex: 0 0 260px;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
 }
 
-.auth-petals span:nth-child(1) { left: 8%; top: -30px; animation-delay: 0s; }
-.auth-petals span:nth-child(2) { left: 28%; top: -30px; animation-delay: 3s; width: 18px; height: 18px; }
-.auth-petals span:nth-child(3) { left: 55%; top: -30px; animation-delay: 6s; }
-.auth-petals span:nth-child(4) { left: 74%; top: -30px; animation-delay: 9s; width: 20px; height: 20px; }
-.auth-petals span:nth-child(5) { left: 90%; top: -30px; animation-delay: 12s; }
-
-@keyframes petal-fall {
-  0% { transform: translate3d(0, -40px, 0) rotate(0deg); }
-  100% { transform: translate3d(60px, 110vh, 0) rotate(320deg); }
-}
-
-.auth-panel {
-  position: relative;
-  z-index: 1;
-  width: min(440px, 100%);
-  background-color: var(--brand-card);
-  border: 1px solid var(--brand-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  padding: var(--spacing-lg);
-}
-
-.auth-brand {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-ml);
-}
-
-.auth-brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, var(--color-sakura), var(--color-lavender));
-  color: #ffffff;
-  font-family: var(--font-tertiary);
-  font-size: 22px;
-  font-weight: var(--weight-bold);
-  flex-shrink: 0;
-}
-
-.auth-brand h1 {
-  font-size: var(--text-lg);
-  color: var(--brand-text);
-}
-
-.auth-brand p {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-}
-
-.auth-form {
+.app-main {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
 }
 
-.auth-form h2 {
-  font-size: var(--text-md);
-  color: var(--brand-text);
+.app-content {
+  flex: 1;
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--spacing-ml);
 }
 
-.auth-switch {
-  font-size: var(--text-sm);
-  color: var(--color-muted);
-  text-align: center;
+.app-content:focus {
+  outline: none;
 }
 
-.auth-switch a {
-  color: var(--color-indigo);
-  font-weight: var(--weight-semibold);
+.sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(26, 26, 46, 0.45);
+  z-index: 95;
 }
 
-.auth-note {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-  background-color: var(--brand-muted-surface);
-  border: 1px solid var(--brand-border);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  line-height: 1.5;
-}
+@media (max-width: 960px) {
+  .app-sidebar {
+    flex: 0 0 0;
+    width: 0;
+    position: static;
+    height: auto;
+  }
 
-.auth-footer {
-  position: relative;
-  z-index: 1;
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-  text-align: center;
-  max-width: 440px;
-}
+  .app-sidebar.is-open .sidebar {
+    transform: translateX(0);
+  }
 
-@media (prefers-reduced-motion: reduce) {
-  .auth-petals span {
-    animation: none;
-    display: none;
+  .app-content {
+    padding: var(--spacing-md);
   }
 }

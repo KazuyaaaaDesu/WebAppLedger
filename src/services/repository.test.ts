@@ -124,6 +124,7 @@ function v1Database() {
     profile: { name: 'Kazu', email: 'kazu@example.com' },
     settings: {
       theme: 'light',
+      colorTheme: 'sakura',
       currency: 'PHP',
       dateFormat: 'YYYY-MM-DD',
       openingBalance: 12000000, // ₱120,000.00

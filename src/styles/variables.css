@@ -229,3 +229,131 @@ h3 {
     font-family: var(--font-primary);
 }
  
+/* ==========================================
+   USER ACCENT PALETTES
+   Independent from light/dark mode. The chosen
+   palette is stored in Settings and applied to
+   the root element as data-color-theme.
+   ========================================== */
+:root {
+  --theme-glow-one: rgba(185, 167, 245, 0.14);
+  --theme-glow-two: rgba(247, 168, 184, 0.16);
+}
+
+[data-color-theme='ocean'] {
+  --color-sakura: #67C7D4;
+  --color-sakura-deep: #3299B5;
+  --color-indigo: #245B83;
+  --color-lavender: #7EA7FF;
+  --color-sky: #67C7D4;
+  --brand-primary: #245B83;
+  --brand-accent: #7EA7FF;
+  --brand-surface: #EAF8FC;
+  --brand-muted-surface: #EEF3FF;
+  --brand-border: rgba(36, 91, 131, 0.14);
+  --sidebar-active-bg: #EAF8FC;
+  --sidebar-active-text: #245B83;
+  --input-bg: #F1FAFD;
+  --input-border: rgba(36, 91, 131, 0.18);
+  --focus-ring: #7EA7FF;
+  --chart-primary: #3299B5;
+  --chart-secondary: #7EA7FF;
+  --theme-glow-one: rgba(126, 167, 255, 0.18);
+  --theme-glow-two: rgba(103, 199, 212, 0.18);
+}
+
+[data-color-theme='mint'] {
+  --color-sakura: #6DD6B0;
+  --color-sakura-deep: #34A985;
+  --color-indigo: #246B5A;
+  --color-lavender: #A3E6D4;
+  --color-sky: #7BC9B6;
+  --brand-primary: #246B5A;
+  --brand-accent: #6DD6B0;
+  --brand-surface: #EAF9F2;
+  --brand-muted-surface: #F0F8F4;
+  --brand-border: rgba(36, 107, 90, 0.14);
+  --sidebar-active-bg: #E6F7EF;
+  --sidebar-active-text: #246B5A;
+  --input-bg: #F1FAF5;
+  --input-border: rgba(36, 107, 90, 0.16);
+  --focus-ring: #6DD6B0;
+  --chart-primary: #34A985;
+  --chart-secondary: #82CFC0;
+  --theme-glow-one: rgba(109, 214, 176, 0.18);
+  --theme-glow-two: rgba(163, 230, 212, 0.18);
+}
+
+[data-color-theme='sunset'] {
+  --color-sakura: #FFAB76;
+  --color-sakura-deep: #E96D69;
+  --color-indigo: #9A456C;
+  --color-lavender: #FF7D9C;
+  --color-sky: #F5B66D;
+  --brand-primary: #9A456C;
+  --brand-accent: #FF7D9C;
+  --brand-surface: #FFF1E9;
+  --brand-muted-surface: #FFF3F1;
+  --brand-border: rgba(154, 69, 108, 0.14);
+  --sidebar-active-bg: #FFF0E8;
+  --sidebar-active-text: #9A456C;
+  --input-bg: #FFF7F1;
+  --input-border: rgba(154, 69, 108, 0.16);
+  --focus-ring: #FFAB76;
+  --chart-primary: #E96D69;
+  --chart-secondary: #FFAB76;
+  --theme-glow-one: rgba(255, 125, 156, 0.16);
+  --theme-glow-two: rgba(255, 171, 118, 0.19);
+}
+
+[data-color-theme='lavender'] {
+  --color-sakura: #C4B5FD;
+  --color-sakura-deep: #9A83E8;
+  --color-indigo: #6554A4;
+  --color-lavender: #E4B8E8;
+  --color-sky: #A6C8FF;
+  --brand-primary: #6554A4;
+  --brand-accent: #C4B5FD;
+  --brand-surface: #F4F0FF;
+  --brand-muted-surface: #F8F2FB;
+  --brand-border: rgba(101, 84, 164, 0.14);
+  --sidebar-active-bg: #F0EAFF;
+  --sidebar-active-text: #6554A4;
+  --input-bg: #F8F5FF;
+  --input-border: rgba(101, 84, 164, 0.16);
+  --focus-ring: #C4B5FD;
+  --chart-primary: #9A83E8;
+  --chart-secondary: #E4B8E8;
+  --theme-glow-one: rgba(196, 181, 253, 0.19);
+  --theme-glow-two: rgba(228, 184, 232, 0.17);
+}
+
+/* Keep custom palettes readable in dark mode. */
+[data-theme='dark'][data-color-theme='ocean'] {
+  --brand-primary: #82C7EE; --brand-accent: #7EA7FF;
+  --brand-surface: #192D40; --brand-muted-surface: #1D2942;
+  --brand-border: rgba(126, 167, 255, 0.20);
+  --sidebar-active-bg: #1F3348; --sidebar-active-text: #9BDCF0;
+  --input-bg: #19283A; --input-border: rgba(126, 167, 255, 0.24);
+}
+[data-theme='dark'][data-color-theme='mint'] {
+  --brand-primary: #7DDEBB; --brand-accent: #6DD6B0;
+  --brand-surface: #19362F; --brand-muted-surface: #1D302D;
+  --brand-border: rgba(109, 214, 176, 0.20);
+  --sidebar-active-bg: #203B33; --sidebar-active-text: #8BE4C5;
+  --input-bg: #1A302A; --input-border: rgba(109, 214, 176, 0.24);
+}
+[data-theme='dark'][data-color-theme='sunset'] {
+  --brand-primary: #FFB28F; --brand-accent: #FF8DA9;
+  --brand-surface: #3B2630; --brand-muted-surface: #33252E;
+  --brand-border: rgba(255, 141, 169, 0.20);
+  --sidebar-active-bg: #402934; --sidebar-active-text: #FFB1C2;
+  --input-bg: #30232D; --input-border: rgba(255, 141, 169, 0.24);
+}
+[data-theme='dark'][data-color-theme='lavender'] {
+  --brand-primary: #C4B5FD; --brand-accent: #E4B8E8;
+  --brand-surface: #2D2741; --brand-muted-surface: #29243A;
+  --brand-border: rgba(196, 181, 253, 0.20);
+  --sidebar-active-bg: #342C49; --sidebar-active-text: #D7CCFF;
+  --input-bg: #28243A; --input-border: rgba(196, 181, 253, 0.24);
+}

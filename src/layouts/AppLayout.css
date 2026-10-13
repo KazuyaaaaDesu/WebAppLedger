@@ -4,8 +4,8 @@
   background-color: var(--brand-bg);
   /* Soft atmospheric backdrop: sakura light on warm paper */
   background-image:
-    radial-gradient(1000px 500px at 85% -10%, rgba(185, 167, 245, 0.14), transparent 60%),
-    radial-gradient(800px 420px at -5% 10%, rgba(247, 168, 184, 0.16), transparent 55%);
+    radial-gradient(1000px 500px at 85% -10%, var(--theme-glow-one), transparent 60%),
+    radial-gradient(800px 420px at -5% 10%, var(--theme-glow-two), transparent 55%);
   background-attachment: fixed;
 }
 

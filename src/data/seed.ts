@@ -257,6 +257,7 @@ export function createSeedDatabase(): Database {
     profile: { name: legacyUser.user.name, email: legacyUser.user.email },
     settings: {
       theme: 'light',
+      colorTheme: 'sakura',
       currency: 'PHP',
       dateFormat: 'YYYY-MM-DD',
       // Legacy field — the opening balance now lives on the account above.
